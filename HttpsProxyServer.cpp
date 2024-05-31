@@ -50,7 +50,7 @@ SSL_CTX_ptr create_context() {
 
     ctx = SSL_CTX_new(method);
     if (!ctx) {
-        perror("Unable to create SSL context");
+        cerr << "Unable to create SSL context" << endl;
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
@@ -78,7 +78,7 @@ SOCKET create_socket(int port) {
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == INVALID_SOCKET) {
-        perror("Unable to create socket");
+        cerr << "Unable to create socket" << endl;
         exit(EXIT_FAILURE);
     }
 
@@ -87,16 +87,18 @@ SOCKET create_socket(int port) {
     addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
-        perror("Unable to bind");
+        cerr << "Unable to bind" << endl;
         closesocket(sockfd);
         exit(EXIT_FAILURE);
     }
 
     if (listen(sockfd, SOMAXCONN) == SOCKET_ERROR) {
-        perror("Unable to listen");
+        cerr << "Unable to listen" << endl;
         closesocket(sockfd);
         exit(EXIT_FAILURE);
     }
+
+    cout << "Listening on port " << port << ":" << endl;
 
     return sockfd;
 }
@@ -110,19 +112,19 @@ SOCKET connect_to_host(const string& hostname, int port) {
     hints.ai_socktype = SOCK_STREAM;
 
     if (getaddrinfo(hostname.c_str(), to_string(port).c_str(), &hints, &res) != 0) {
-        perror("getaddrinfo");
+        cerr << "getaddrinfo" << endl;
         return INVALID_SOCKET;
     }
 
     sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (sockfd == INVALID_SOCKET) {
-        perror("Unable to create socket");
+        cerr << "Unable to create socket" << endl;
         freeaddrinfo(res);
         return INVALID_SOCKET;
     }
 
     if (connect(sockfd, res->ai_addr, res->ai_addrlen) == SOCKET_ERROR) {
-        perror("Unable to connect to host");
+        cerr << "Unable to connect to host" << endl;
         closesocket(sockfd);
         freeaddrinfo(res);
         return INVALID_SOCKET;
@@ -145,14 +147,12 @@ void handle_http_request(SOCKET client_sock, const string& request) {
 
     SOCKET remote_sock = connect_to_host(host, 80);
     if (remote_sock == INVALID_SOCKET) {
-        cerr << "Unable to connect to remote host.\n";
+        cerr << "Unable to connect to remote host." << endl;
         return;
     }
 
-    // Forward the initial request
     send(remote_sock, request.c_str(), request.length(), 0);
 
-    // Forward responses from remote server to client
     char buffer[4096];
     int bytes;
     while ((bytes = recv(remote_sock, buffer, sizeof(buffer), 0)) > 0) {
@@ -165,7 +165,7 @@ void handle_http_request(SOCKET client_sock, const string& request) {
 void handle_https_request(SOCKET client_sock, SSL_CTX* ctx, const string& host, int port) {
     SOCKET remote_sock = connect_to_host(host, port);
     if (remote_sock == INVALID_SOCKET) {
-        cerr << "Unable to connect to remote host.\n";
+        cerr << "Unable to connect to remote host." << endl;
         return;
     }
 
@@ -188,7 +188,7 @@ void handle_https_request(SOCKET client_sock, SSL_CTX* ctx, const string& host, 
         int activity = select(max_fd, &readfds, NULL, NULL, NULL);
 
         if (activity == SOCKET_ERROR) {
-            perror("select");
+            cerr << "select" << endl;
             break;
         }
 
@@ -228,6 +228,7 @@ void handle_client(SSL_CTX* ctx, SOCKET client_sock) {
         size_t colon_pos = host_port.find(":");
         string host = host_port.substr(0, colon_pos);
         int port = stoi(host_port.substr(colon_pos + 1));
+        cout << "Host: " << host << endl;
         handle_https_request(client_sock, ctx, host, port);
     }
     else {
@@ -251,7 +252,7 @@ int main() {
     while (true) {
         SOCKET client_sock = accept(server_fd, NULL, NULL);
         if (client_sock == INVALID_SOCKET) {
-            perror("Unable to accept connection");
+            cerr << "Unable to accept connection" << endl;
             continue;
         }
         threads.emplace_back(thread(handle_client, ctx.get(), client_sock));
