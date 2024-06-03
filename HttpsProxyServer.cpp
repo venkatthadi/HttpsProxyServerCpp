@@ -66,7 +66,7 @@ void configure_context(SSL_CTX* ctx) {
         exit(EXIT_FAILURE);
     }
 
-    if (SSL_CTX_use_PrivateKey_file(ctx, "C:\\Users\\user\\source\\repos\\HttpsProxyServer\\server.key", SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_PrivateKey_file(ctx, "C:\\Users\\user\\OneDrive\\Desktop\\Certs\\server.key", SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
@@ -135,6 +135,7 @@ SOCKET connect_to_host(const string& hostname, int port) {
 }
 
 void handle_http_request(SOCKET client_sock, const string& request) {
+    cout << request << endl;
     istringstream iss(request);
     string method, url, version;
     iss >> method >> url >> version;
@@ -228,7 +229,6 @@ void handle_client(SSL_CTX* ctx, SOCKET client_sock) {
         size_t colon_pos = host_port.find(":");
         string host = host_port.substr(0, colon_pos);
         int port = stoi(host_port.substr(colon_pos + 1));
-        cout << "Host: " << host << endl;
         handle_https_request(client_sock, ctx, host, port);
     }
     else {
@@ -255,7 +255,7 @@ int main() {
             cerr << "Unable to accept connection" << endl;
             continue;
         }
-        threads.emplace_back(thread(handle_client, ctx.get(), client_sock));
+        threads.push_back(thread(handle_client, ctx.get(), client_sock));
     }
 
     for (auto& th : threads) {
