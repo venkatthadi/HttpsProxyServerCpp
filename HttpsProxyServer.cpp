@@ -35,10 +35,6 @@ void initialize_openssl() {
     OpenSSL_add_ssl_algorithms();
 }
 
-void cleanup_openssl() {
-    EVP_cleanup();
-}
-
 using SSL_CTX_ptr = unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)>;
 using SSL_ptr = unique_ptr<SSL, decltype(&SSL_free)>;
 
@@ -135,7 +131,7 @@ SOCKET connect_to_host(const string& hostname, int port) {
 }
 
 void handle_http_request(SOCKET client_sock, const string& request) {
-    cout << request << endl;
+    // cout << request << endl;
     istringstream iss(request);
     string method, url, version;
     iss >> method >> url >> version;
@@ -265,7 +261,6 @@ int main() {
     }
 
     closesocket(server_fd);
-    cleanup_openssl();
     cleanup_winsock();
     return 0;
 }
