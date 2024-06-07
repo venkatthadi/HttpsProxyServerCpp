@@ -128,37 +128,6 @@ void configure_context(SSL_CTX* ctx, X509* cert, EVP_PKEY* pkey) {
     cout << "Private key used" << endl;
 }
 
-vector<string> get_supported_ciphers(SSL* ssl) {
-    vector<string> ciphers;
-    const char* cipher;
-    int i = 0;
-
-    while ((cipher = SSL_get_cipher_list(ssl, i)) != NULL) {
-        ciphers.push_back(cipher);
-        i++;
-    }
-
-    return ciphers;
-}
-
-void configure_dynamic_ciphers(SSL_CTX* ctx, const vector<string>& ciphers) {
-    string cipher_list;
-
-    for (const string& cipher : ciphers) {
-        if (!cipher_list.empty()) {
-            cipher_list += ":";
-        }
-        cipher_list += cipher;
-    }
-
-    if (SSL_CTX_set_cipher_list(ctx, cipher_list.c_str()) != 1) {
-        cerr << "Error setting dynamic cipher list" << endl;
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-    // cout << "Dynamic cipher list configured: " << cipher_list << endl;
-}
-
 ASN1_INTEGER* generate_serial() {
     ASN1_INTEGER* serial = ASN1_INTEGER_new();
     if (!serial) {
