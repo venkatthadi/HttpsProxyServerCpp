@@ -23,9 +23,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="server.crt">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="server.key">
       <Filter>Source Files</Filter>
     </None>
